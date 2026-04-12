@@ -6,7 +6,7 @@ Este proyecto tiene el propósito de crear un modelo clasificador del potencial 
 ## Descripción del dataset
 **Nombre:** “Adult”
 
-**Link a dataset:** https://archive.ics.uci.edu/dataset/2/adult
+**Links a dataset:** https://archive.ics.uci.edu/dataset/2/adult o https://www.kaggle.com/datasets/wenruliu/adult-income-dataset?resource=download
 
 **Autores de dataset:** Barry Becker y Ronny Kohavi
 
@@ -46,16 +46,16 @@ Este proyecto tiene el propósito de crear un modelo clasificador del potencial 
 ### Preprocesamiento de los datos antes del split de entrenamiento
 Antes de realizar la división del dataset, se realizaron algunas técnicas de preprocesamiento. Las anteriores no representaron un "data leakage" debido a que <a href="https://pub.towardsai.net/data-leakage-in-machine-learning-why-you-must-split-before-preprocessing-3ddc3dcde4e9"><u>los cambios que no analizan relaciones entre los datos evitan que el modelo aprenda patrones o medidas que introduzcan un sesgo</u></a>. Las técnicas de preprocesamiento realizadas fueron las siguientes:
 - Eliminación de la variable irrelevante "fnlwgt", debido a que describe el número de personas representadas por esa instancia, no una característica de la persona de la cual el modelo puede aprender.
-- Eliminación de la variable duplicada “education-num”, ya que es una versión numérica de la variable “education”, por lo que utilizar ambas sería redundante y generaría multicolinealidad. La multicolinearidad es una condicion donde <a href="https://www.mdpi.com/2227-7390/10/8/1283#:~:text=2.,The%20authors%20of%20%5B4%5D."><u>una o dos variables independientes tienen una relación lineal, lo que afectaría a la interpretabilidad del modelo (como identificar las variables que tienen mayor impacto en la predicción)</u></a>.
-- Eliminación de las instancias con valores faltantes en las variables "workclass", "occupation", "native-country"; ya que <a href="https://ursmaheshj.medium.com/effective-strategies-for-handling-missing-data-a215056a07e3"><u> sólo representan el 4.51% de las instancias totales del dataset</u></a>, por lo que la distribución no se alterará en gran medida y se disminuirá el tiempo de computo frente a otras técnicas como la imputación.
+- Eliminación de la variable duplicada “education-num”, ya que es una versión numérica de la variable “education”, por lo que utilizar ambas sería redundante y generaría multicolinealidad. La multicolinearidad es una condición donde <a href="https://www.mdpi.com/2227-7390/10/8/1283#:~:text=2.,The%20authors%20of%20%5B4%5D."><u>una o dos variables independientes tienen una relación lineal, lo que afectaría a la interpretabilidad del modelo (como identificar las variables que tienen mayor impacto en la predicción)</u></a>.
+- Imputación de los valores faltantes de las instancias en las variables categóricas "workclass", "occupation" y "native-country" con el valor "Unknown"; ya que <a href="https://ursmaheshj.medium.com/effective-strategies-for-handling-missing-data-a215056a07e3"><u> representan más del 13.2% de las instancias totales del dataset</u></a>, por lo que la distribución podría alterarse si sólo se eliminan.
 - Reemplazo de tipo de valor de la variable de string a integer (e.g "<=50K" a 0, y ">50K" a 1) por buena práctica, a pesar de que no tenga impacto en el desempeño del modelo.
 
 ### Split de entrenamiento
-Se decidió usar el split del dataset de 80% train y 20% test debido al tamaño medio del dataset (48,842 instancias). Cabe destacar que el dataset se encuentra desbalanceado, es decir, existe una gran diferencia entre el porcentaje de instancias donde el ingreso es menor o igual a 50K (~76.07%) y donde es mayor a 50K (~23.92%), lo que causaría que <a href="https://medium.com/@becaye-balde/why-you-should-use-stratified-split-bddb6dadd34e"><u> el método aleatorio de splitting por defecto no sea representativo </u></a> (con la posibilidad de que la clase minoría ni siquiera aparezca en el split de entrenamiento). Debido a esto se decidió garantizar que existiera la misma proporción entre estas clases tanto en el split de train como en el de test.
+Se decidió usar el split del dataset de 80% de train y 20% de test debido al tamaño medio del dataset (48,842 instancias). Cabe destacar que el dataset se encuentra desbalanceado, es decir, existe una gran diferencia entre el porcentaje de instancias donde el ingreso es menor o igual a 50K (~68.54%) y donde es mayor a 50K (~31.45%), lo que causaría que <a href="https://medium.com/@becaye-balde/why-you-should-use-stratified-split-bddb6dadd34e"><u> el método aleatorio de splitting por defecto no sea representativo </u></a> (con la posibilidad de que la clase minoría ni siquiera aparezca en el split de entrenamiento). Debido a esto se decidió garantizar que existiera la misma proporción entre estas clases tanto en el split de train como en el de test.
 
 ### Preprocesamiento de los datos después del split de entrenamiento
 - Se normalizaron las variables numéricas para tener una varianza del 0 al 1
-- Se aplicó One-hot Encoding a las variables categóricas para representarlos como vectores
+- Se aplicó One-hot Encoding a las variables categóricas para representarlas como vectores
 
 ## Referencias
 - Ashraf, K. (2026, 12 febrero). Data Leakage in Machine Learning: Why You Must Split Before Preprocessing. Towards AI. Recuperado 8 de abril de 2026, de https://pub.towardsai.net/data-leakage-in-machine-learning-why-you-must-split-before-preprocessing-3ddc3dcde4e9
