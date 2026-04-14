@@ -67,7 +67,7 @@ Se decidió usar el split del dataset de 80% de train y 20% de test debido al ta
   <em> Distribución de los datos en las clases de ingreso <=50K (0) y >50K (1)</em>
 </p>
 
-Debido a esto se decidió garantizar que existiera la misma proporción entre estas clases tanto en el split de train como en el de test.
+Debido a esto, mediante el [método de división estratificada "stratify"](https://medium.com/@becaye-balde/why-you-should-use-stratified-split-bddb6dadd34e), se decidió garantizar que existiera la misma proporción entre estas clases tanto en el split de train como en el de test. Este método, que se utiliza al momento de dividir los datos de entrenamiento y prueba, garantiza que la proporción de las clases en el dataset original también se mantenga en las divisiones de entrenamiento y testing.
 
 ### Preprocesamiento de los datos después del split de entrenamiento
 - Se normalizaron las variables numéricas para tener una varianza del 0 al 1
@@ -129,3 +129,4 @@ De acuerdo a la matriz de confusión, el modelo tiende a detectar más falsos ne
 - Baldé, B. (2023, 13 abril). Why you should use stratified Split. Medium. Recuperado 9 de abril de 2026, de https://medium.com/@becaye-balde/why-you-should-use-stratified-split-bddb6dadd34e
 - Shuvo, S., Mohanty, J., & Patel, D. (2024). Predicting Annual Income of Individuals using Classification Techniques. Recuperado 12 de abril de 2026, de https://d1wqtxts1xzle7.cloudfront.net/119062941/695_report_2_-libre.pdf?1729547185=&response-content-disposition=inline%3B+filename%3DPredicting_Annual_Income_of_Individuals.pdf&Expires=1776033888&Signature=dNPtYHanu~lvL9OcCK~dQkJizOWOmcRZr~7TIKfdhINdVjJl1c4BAlv4ltwAEWomBsCQDT34Pd5VmYHD~e0cJAwV4zFD4iEafSfRabkLuZXWzKW1~ZHClIjIlc6fdUfT4kJmTpWJ8Z9xDe0de7QpQW8g5jEt8lwB9wRf1IQAU1haPX2JdasDt15NqjL87uvan9JyWRKmaaNmSp-DY3DtjO3HjeqD8j380kvBzII5WDsiTbIXuhGrlzR~H7fkhoVrNyI6pNXHMHMH7X7b9coo3NRfybYtmjMiyhNocTjCEVxdIEylqfYmzSUDe-amR2reYb4-GdPARzWc4xnw1Bku4Q__&Key-Pair-Id=APKAJLOHF5GGSLRBV4ZA
 - O. Olawale Awe, PhD. (n.d). Computational Strategies for Handling Imbalanced Data in Machine Learning, LISA 2020 Global Network, USA. https://isi-web.org/sites/default/files/2024-02/Handling-Data-Imbalance-in-Machine-Learning.pdf
+- Baldé, B. (2023b, abril 13). Why you should use stratified split. Medium. Recuperado 14 de abril de 2026, de https://medium.com/@becaye-balde/why-you-should-use-stratified-split-bddb6dadd34e
