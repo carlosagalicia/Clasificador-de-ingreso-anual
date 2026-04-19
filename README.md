@@ -127,20 +127,74 @@ Comparado con el artículo (con Accuracy de 0.860 y F1-score de 0.66), se puede 
   <em> Matriz de confusión del modelo inicial</em>
 </p>
 
-De acuerdo a la matriz de confusión, el modelo tiende a detectar más falsos negativos, es decir, casos donde la persona tiene un ingreso mayor a 50K dólares pero fue clasificada como menor a 50K dólares. Si se prioriza que el modelo detecte a todas las personas con ingreso mayor a 50K dólares (recall), entonces actualmente el modelo no detectó correctamente al 38.57% de personas en este segmento, por lo que es una gran área de oportunidad que también se puede observar en las gráficas de train/validation.
+De acuerdo a la matriz de confusión, el modelo tiende a detectar más falsos negativos que falsos positivos, es decir, casos donde la persona tiene un ingreso mayor a 50K dólares pero fue clasificada como menor a 50K dólares. Si se prioriza que el modelo detecte a todas las personas con ingreso mayor a 50K dólares (recall), entonces actualmente el modelo no detectó correctamente al 38.57% de personas en este segmento, por lo que es una gran área de oportunidad que también se puede observar en las gráficas de train/validation.
+
+### Refinamiento del modelo
+Se realizaron intentos para mejorar el F1-score y específicamente el recall del modelo mediante la experimentación con hiperparámetros como "batch size", "epochs", el tipo de optimizer,  métrica de error, etc. A pesar de esto, no se encontraron resultados o mejoras evidentes en el modelo hasta que se investigaron formas de reducir el overfitting, llamadas [métodos de regularización](https://www.ibm.com/think/topics/regularization#1580786321). Ante esto, se consideró mejor trabajar con estas técnicas.
+
+### Métodos de regularización
+La regularización consiste en técnicas que mejoran la generalización de un modelo (habilidad para generar predicciones precisas con nuevos datasets) a cambio de una disminución en el accuracy. Los métodos de regularización que se utilizaron y probaron fueron Early stopping (con una paciencia de 5 épocas) y Dropout de Keras (dos capas con un rate de 0.3 y 0.2).
+
+[Early stopping](https://keras.io/api/callbacks/early_stopping/) es un callback que consiste en limitar el número de epochs durante el entrenamiento del modelo, procesando de forma continua los datos de entrenamiento y deteniéndose cuando no hay mejora o existe un deterioro en la métrica bajo la cual se evalúa el desempeño del modelo (pérdida en la validación en este caso). Se seleccionó esta técnica con el objetivo de alcanzar el mejor desempeño antes de que el valor de loss en la validación aumente. "patience" es el número de épocas durante las cuales el modelo espera para que la métrica mejore antes de detener el entrenamiento.
+
+[Dropout](https://keras.io/api/layers/regularization_layers/dropout/) actúa eliminando de forma aleatoria nodos de las redes neuronales (incluyendo sus conexiones de entrada y salida) durante el entrenamiento. Esta técnica simula entrenar múltiples redes neuronales al entrenar diferentes subredes (cada una con diferentes nodos aleatorios excluidos) de la red original. Al final se utiliza la red completa sin Dropout para las pruebas, lo que equivale a hacer predicciones con un promedio de múltiples subredes. Se decidió utilizar este método para prevenir que las neuronas se sobreadapten a los datos en caso de que este fenómeno sea el causante principal del overfitting del modelo inicial. "rate" es el valor de 0 a 1 que representa la fracción de nodos de la red a eliminar.
+
+A diferencia del guardado manual del modelo básico, se utilizó el callback de [ModelCheckpoint](https://keras.io/api/callbacks/model_checkpoint/) con "save_best_only=True" para guardar automáticamente la mejor versión del modelo durante el entrenamiento, basada en la métrica de pérdida en la validación con monitor="val_loss". Esto permite reutilizar el mejor modelo sin la obligación de entrenarlo.
+
+### Ajuste de threshold
+[El threshold actúa como el umbral que define la decisión de clasificación del modelo](https://scikit-learn.org/stable/modules/classification_threshold.html). En este modelo de clasificación binaria, si la probabilidad de predicción del modelo es mayor al threshold, entonces se clasifica como clase positiva (1), de lo contrario, se clasifica como clase negativa (0). Se experimentó con el ajuste del threshold debido a que [el umbral por defecto de 0.5 no se considera apropiado al trabajar con datasets con clases desbalanceadas](https://developers.google.com/machine-learning/crash-course/classification/thresholding?hl=es-419). Esto causa que las predicciones de los modelos favorezcan a las clases mayoritarias y clasifiquen incorrectamente las clases minoritarias. 
+
+Se iteró sobre un conjunto de thresholds de 0.1 a 0.91, clasificando la probabilidad de predicción del modelo con cada threshold y calculando su desempeño con la métrica F1-score. Finalmente se seleccionó el threshold (0.369) que retornara un mayor F1-score (0.696) para utilizarlo posteriormente en la evaluación final del modelo con el resto de métricas de interés.
+
+### Evaluación del modelo refinado
+#### Resultados obtenidos
+Se graficaron los valores para "accuracy", "precision", "recall" y "loss" en los datos de entrenamiento y validación a lo largo de las épocas:
+<img width="928" height="611" alt="image" src="https://github.com/user-attachments/assets/5233e103-e550-441d-8835-f1d4f6c3e7bd"/>
+
+De acuerdo a las gráficas, se puede observar que todavía existen algunas fluctuaciones en el Recall y Precision a lo largo de los epochs; sin embargo, la diferencia train-validation entre Precision del modelo básico (~0.07) es mayor que la del modelo refinado (~0.01), lo que indica que el modelo refinado tiene un Precision más cercano ante nuevos datos. Al contrario, el Recall del modelo en la validación tiene una gran diferencia con el Recall en el entrenamiento, lo cual es esperado debido a que presenta tendencias inversamente proporcionales a Precision tanto en el modelo inicial como en el refinado.
+
+Por otro lado se observan mejoras en el Accuracy y el Loss, donde ya no existe una gran diferencia entre las métricas de entrenamiento y validación a comparación de las diferencias del modelo inicial, lo que indica una reducción en las tendencias de sobreajuste del modelo (overfitting).
+
+| Métrica | Valor
+|--------|-----|
+|Loss|0.310|
+|Accuracy|0.851|
+|Precision|0.681|
+|Recall|0.712|
+|F1-score|0.696|
+
+En comparación con el modelo inicial, el modelo refinado presentó un aumento significativo en el Recall y F1-score a expensas de una disminución en el Precision y Accuracy, también logrando una disminución en el Loss
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/734f7a70-7824-4a80-8658-9d9776c3a27d" alt="matriz de confusión" width="40%" />
+  <br>
+  <em> Matriz de confusión del modelo refinado</em>
+</p>
+
+De acuerdo a la matriz de confusión, el modelo ahora tiene la tendencia a detectar más falsos positivos que falsos negativos. La cantidad detectada de falsos negativos se redujo un 25,5% con respecto al modelo anterior. Esto representa una mejora, donde el modelo detecta a más personas con ingreso mayor a 50K dólares (recall) correctamente. Por otro lado, también se puede notar la disminución en la precisión en la matriz, donde se detectaron 274 falsos positivos adicionales en comparación con el modelo inicial.
+
+## Conclusión
+Se implementó un modelo de clasificación binaria para predecir si una persona tiene un ingreso mayor o menor a 50K dólares basado en aspectos como su clase de trabajo, nivel educativo, estado civil, edad, etc. Se realizaron técnicas para trabajar con un dataset desbalanceado como la división stratificada durante el split de entrenamiento y se desarrolló un modelo básico con una arquitectura derivada de una investigación previa, para posteriormente refinarlo.
+El modelo refinado contó con mejoras en el Loss, Recall y F1-Score mediante el ajuste del umbral de clasificación de las probabilidades de predicción. Sin embargo, se presentó una disminución considerable en el Precision, lo que deja a interpretación del diseñador del modelo cuál es la métrica que tiene prioridad para la evaluación del modelo. Por otro lado, mediante la implementación de técnicas de regularización "Dropout" y "ModelCheckpoint" se logró reducir la presencia de overfitting. No obstante, se considera conveniente seguir optimizando el modelo para mejorar su desempeño y generalización ante nuevos datos.
 
 ## Referencias
-- Ashraf, K. (2026, 12 febrero). Data Leakage in Machine Learning: Why You Must Split Before Preprocessing. Towards AI. Recuperado 8 de abril de 2026, de https://pub.towardsai.net/data-leakage-in-machine-learning-why-you-must-split-before-preprocessing-3ddc3dcde4e9
+- Ashraf, K. (2026, 12 de febrero). Data Leakage in Machine Learning: Why You Must Split Before Preprocessing. Towards AI. Recuperado 8 de abril de 2026, de https://pub.towardsai.net/data-leakage-in-machine-learning-why-you-must-split-before-preprocessing-3ddc3dcde4e9
 - Chan, J. Y.-L., Leow, S. M. H., Bea, K. T., Cheng, W. K., Phoong, S. W., Hong, Z.-W., & Chen, Y.-L. (2022). Mitigating the Multicollinearity Problem and Its Machine Learning Approach: A Review. Mathematics, 10(8), 1283. https://doi.org/10.3390/math10081283
-- Jadhav, M. (2023, 4 junio). How to handle missing Data | Machine Learning | Data Science. Medium. Recuperado 8 de abril de 2026, de https://ursmaheshj.medium.com/effective-strategies-for-handling-missing-data-a215056a07e3
-- Baldé, B. (2023, 13 abril). Why you should use stratified Split. Medium. Recuperado 9 de abril de 2026, de https://medium.com/@becaye-balde/why-you-should-use-stratified-split-bddb6dadd34e
+- Jadhav, M. (2023, 4 de junio). How to handle missing Data | Machine Learning | Data Science. Medium. Recuperado 8 de abril de 2026, de https://ursmaheshj.medium.com/effective-strategies-for-handling-missing-data-a215056a07e3
+- Baldé, B. (2023, 13 de abril). Why you should use stratified Split. Medium. Recuperado 9 de abril de 2026, de https://medium.com/@becaye-balde/why-you-should-use-stratified-split-bddb6dadd34e
 - Shuvo, S., Mohanty, J., & Patel, D. (2024). Predicting Annual Income of Individuals using Classification Techniques. Recuperado 12 de abril de 2026, de https://d1wqtxts1xzle7.cloudfront.net/119062941/695_report_2_-libre.pdf?1729547185=&response-content-disposition=inline%3B+filename%3DPredicting_Annual_Income_of_Individuals.pdf&Expires=1776033888&Signature=dNPtYHanu~lvL9OcCK~dQkJizOWOmcRZr~7TIKfdhINdVjJl1c4BAlv4ltwAEWomBsCQDT34Pd5VmYHD~e0cJAwV4zFD4iEafSfRabkLuZXWzKW1~ZHClIjIlc6fdUfT4kJmTpWJ8Z9xDe0de7QpQW8g5jEt8lwB9wRf1IQAU1haPX2JdasDt15NqjL87uvan9JyWRKmaaNmSp-DY3DtjO3HjeqD8j380kvBzII5WDsiTbIXuhGrlzR~H7fkhoVrNyI6pNXHMHMH7X7b9coo3NRfybYtmjMiyhNocTjCEVxdIEylqfYmzSUDe-amR2reYb4-GdPARzWc4xnw1Bku4Q__&Key-Pair-Id=APKAJLOHF5GGSLRBV4ZA
 - O. Olawale Awe, PhD. (n.d). Computational Strategies for Handling Imbalanced Data in Machine Learning, LISA 2020 Global Network, USA. https://isi-web.org/sites/default/files/2024-02/Handling-Data-Imbalance-in-Machine-Learning.pdf
-- Baldé, B. (2023b, abril 13). Why you should use stratified split. Medium. Recuperado 14 de abril de 2026, de https://medium.com/@becaye-balde/why-you-should-use-stratified-split-bddb6dadd34e
+- Baldé, B. (2023, 13 de abril). Why you should use stratified split. Medium. Recuperado 14 de abril de 2026, de https://medium.com/@becaye-balde/why-you-should-use-stratified-split-bddb6dadd34e
 - Scikit-learn. (s. f.). StandardScaler. Recuperado 18 de abril de 2026, de https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
 - Scikit-learn. (s. f.). StandardScaler. Recuperado 18 de abril de 2026, de https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html
 - Scikit-learn. (s. f.). Model persistence. Recuperado 18 de abril de 2026, de https://scikit-learn.org/stable/model_persistence.html
 - Joblib. (s. f.). joblib.dump — joblib 1.5.3 documentation. Recuperado 18 de abril de 2026, de https://joblib.readthedocs.io/en/stable/generated/joblib.dump.html#joblib.dump
 - Joblib. (s. f.). joblib.load — joblib 1.5.3 documentation. Recuperado 18 de abril de 2026, de https://joblib.readthedocs.io/en/latest/generated/joblib.load.html
-- Webster, K. (2020, 15 septiembre). Callbacks for saving models.ipynb. Google Colab. Recuperado 18 de abril de 2026, de https://colab.research.google.com/drive/1qquddbZCV-ZjxAG6LY7kCLsMR1PlAiV8?authuser=1#scrollTo=XJcHgGhWjDJZ
+- Webster, K. (2020, 15 de septiembre). Callbacks for saving models.ipynb. Google Colab. Recuperado 18 de abril de 2026, de https://colab.research.google.com/drive/1qquddbZCV-ZjxAG6LY7kCLsMR1PlAiV8?authuser=1#scrollTo=XJcHgGhWjDJZ
 - Team, K. (s. f.). Keras documentation: Whole model saving & loading. Recuperado 18 de abril de 2026, de https://keras.io/api/models/model_saving_apis/model_saving_and_loading/
+- Ph.D., J. M., & Kavlakoglu, E. (2025, 17 de noviembre). What is regularization?. IBM. Recuperado 18 de abril de 2026, de https://www.ibm.com/think/topics/regularization#1580786321
+- Team, K. (s. f.-a). Keras documentation: EarlyStopping. Recuperado 18 de abril de 2026, de https://keras.io/api/callbacks/early_stopping/
+- Team, K. (s. f.-a). Keras documentation: Dropout layer. Recuperado 18 de abril de 2026, de https://keras.io/api/layers/regularization_layers/dropout/
+- Team, K. (s. f.-c). Keras documentation: ModelCheckpoint. Recuperado 18 de abril de 2026, de https://keras.io/api/callbacks/model_checkpoint/
+- Google. (s. f.). Umbrales y matriz de confusión. Google For Developers. Recuperado 19 de abril de 2026, de https://developers.google.com/machine-learning/crash-course/classification/thresholding?hl=es-419
+- Scikit-learn. (s. f.). 3.3. Tuning the decision threshold for class prediction. Recuperado 19 de abril de 2026, de https://scikit-learn.org/stable/modules/classification_threshold.html
