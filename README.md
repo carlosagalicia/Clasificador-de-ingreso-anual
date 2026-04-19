@@ -70,8 +70,12 @@ Se decidió usar el split del dataset de 80% de train y 20% de test debido al ta
 Debido a esto, mediante el [método de división estratificada "stratify"](https://medium.com/@becaye-balde/why-you-should-use-stratified-split-bddb6dadd34e), se decidió garantizar que existiera la misma proporción entre estas clases tanto en el split de train como en el de test. Este método, que se utiliza al momento de dividir los datos de entrenamiento y prueba, garantiza que la proporción de las clases en el dataset original también se mantenga en las divisiones de entrenamiento y testing.
 
 ### Preprocesamiento de los datos después del split de entrenamiento
-- Se normalizaron las variables numéricas para tener una varianza del 0 al 1
-- Se aplicó One-hot Encoding a las variables categóricas y a la variable binaria "gender" para que puedan ser procesadas por el modelo como arrays.
+- Se normalizaron las variables numéricas para tener una varianza del 0 al 1 mediante [StandardScaler](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html) de sklearn.
+- Se aplicó One-hot Encoding a las variables categóricas y a la variable binaria "gender" para que puedan ser procesadas por el modelo como arrays mediante [OneHotEncoder](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html) de sklearn.
+
+Debido a que los modelos que se guardarán y cargarán posteriormente requieren recibir los datos transformados de la misma manera que durante el entrenamiento, es necesario que el proceso de preprocesamiento persista. Una alternativa sería reconstruir manualmente el preprocesador y volver a ajustarlo (fit) con los datos de entrenamiento. Sin embargo, esto requiere mayor esfuerzo computacional.
+
+Ante esto, se decidió guardar el objeto del preprocesador en un archivo mediante "[joblib.dump](https://joblib.readthedocs.io/en/stable/generated/joblib.dump.html#joblib.dump)(preprocessor, ruta_de_guardado)" para reutilizarlo directamente con "[joblib.load(ruta_de_guardado)](https://joblib.readthedocs.io/en/latest/generated/joblib.load.html)", evitando recalcular el proceso cuando el kernel se reinicia o se decide trabajar en otro momento y [siendo eficiente con el tamaño del dataset preprocesado](https://scikit-learn.org/stable/model_persistence.html).
 
 ### Implementación del modelo
 De acuerdo en el artículo de investigación ["Predicting Annual Income of Individuals using Classification Techniques"](https://d1wqtxts1xzle7.cloudfront.net/119062941/695_report_2_-libre.pdf?1729547185=&response-content-disposition=inline%3B+filename%3DPredicting_Annual_Income_of_Individuals.pdf&Expires=1776033888&Signature=dNPtYHanu~lvL9OcCK~dQkJizOWOmcRZr~7TIKfdhINdVjJl1c4BAlv4ltwAEWomBsCQDT34Pd5VmYHD~e0cJAwV4zFD4iEafSfRabkLuZXWzKW1~ZHClIjIlc6fdUfT4kJmTpWJ8Z9xDe0de7QpQW8g5jEt8lwB9wRf1IQAU1haPX2JdasDt15NqjL87uvan9JyWRKmaaNmSp-DY3DtjO3HjeqD8j380kvBzII5WDsiTbIXuhGrlzR~H7fkhoVrNyI6pNXHMHMH7X7b9coo3NRfybYtmjMiyhNocTjCEVxdIEylqfYmzSUDe-amR2reYb4-GdPARzWc4xnw1Bku4Q__&Key-Pair-Id=APKAJLOHF5GGSLRBV4ZA) se seleccionó como modelo inicial un modelo de Red Neuronal Artificial (ANN) con la siguiente arquitectura:
@@ -82,6 +86,9 @@ De acuerdo en el artículo de investigación ["Predicting Annual Income of Indiv
 - Optimizador Adam.
 - Batch size de 32.
 - 18 épocas.
+
+Por otro lado, para permitir la [reutilización de los modelos sin la necesidad de volver a entrenarlos](https://colab.research.google.com/drive/1qquddbZCV-ZjxAG6LY7kCLsMR1PlAiV8?authuser=1#scrollTo=2A8uucqrjDJY) se utilizaron los [métodos](https://keras.io/api/models/model_saving_apis/model_saving_and_loading/) "model.save" (para guardar el modelo en formato .keras) y "tf.keras.models.load_model" (para instanciar el modelo guardado). Esto guarda la arquitectura y pesos para reutilizar el modelo en el mismo estado en el que fue entrenado.
+Esto se llevó a cabo con el objetivo de evaluar los modelos y realizar predicciones en nuevas ejecuciones sin entrenamiento previo.
 
 ### Evaluación inicial del modelo
 [Debido a que el dataset se encuentra desbalanceado, las métricas seleccionadas](https://isi-web.org/sites/default/files/2024-02/Handling-Data-Imbalance-in-Machine-Learning.pdf) y consideradas relevantes para evaluar el desempeño de este modelo fueron:
@@ -130,3 +137,10 @@ De acuerdo a la matriz de confusión, el modelo tiende a detectar más falsos ne
 - Shuvo, S., Mohanty, J., & Patel, D. (2024). Predicting Annual Income of Individuals using Classification Techniques. Recuperado 12 de abril de 2026, de https://d1wqtxts1xzle7.cloudfront.net/119062941/695_report_2_-libre.pdf?1729547185=&response-content-disposition=inline%3B+filename%3DPredicting_Annual_Income_of_Individuals.pdf&Expires=1776033888&Signature=dNPtYHanu~lvL9OcCK~dQkJizOWOmcRZr~7TIKfdhINdVjJl1c4BAlv4ltwAEWomBsCQDT34Pd5VmYHD~e0cJAwV4zFD4iEafSfRabkLuZXWzKW1~ZHClIjIlc6fdUfT4kJmTpWJ8Z9xDe0de7QpQW8g5jEt8lwB9wRf1IQAU1haPX2JdasDt15NqjL87uvan9JyWRKmaaNmSp-DY3DtjO3HjeqD8j380kvBzII5WDsiTbIXuhGrlzR~H7fkhoVrNyI6pNXHMHMH7X7b9coo3NRfybYtmjMiyhNocTjCEVxdIEylqfYmzSUDe-amR2reYb4-GdPARzWc4xnw1Bku4Q__&Key-Pair-Id=APKAJLOHF5GGSLRBV4ZA
 - O. Olawale Awe, PhD. (n.d). Computational Strategies for Handling Imbalanced Data in Machine Learning, LISA 2020 Global Network, USA. https://isi-web.org/sites/default/files/2024-02/Handling-Data-Imbalance-in-Machine-Learning.pdf
 - Baldé, B. (2023b, abril 13). Why you should use stratified split. Medium. Recuperado 14 de abril de 2026, de https://medium.com/@becaye-balde/why-you-should-use-stratified-split-bddb6dadd34e
+- Scikit-learn. (s. f.). StandardScaler. Recuperado 18 de abril de 2026, de https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
+- Scikit-learn. (s. f.). StandardScaler. Recuperado 18 de abril de 2026, de https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.OneHotEncoder.html
+- Scikit-learn. (s. f.). Model persistence. Recuperado 18 de abril de 2026, de https://scikit-learn.org/stable/model_persistence.html
+- Joblib. (s. f.). joblib.dump — joblib 1.5.3 documentation. Recuperado 18 de abril de 2026, de https://joblib.readthedocs.io/en/stable/generated/joblib.dump.html#joblib.dump
+- Joblib. (s. f.). joblib.load — joblib 1.5.3 documentation. Recuperado 18 de abril de 2026, de https://joblib.readthedocs.io/en/latest/generated/joblib.load.html
+- Webster, K. (2020, 15 septiembre). Callbacks for saving models.ipynb. Google Colab. Recuperado 18 de abril de 2026, de https://colab.research.google.com/drive/1qquddbZCV-ZjxAG6LY7kCLsMR1PlAiV8?authuser=1#scrollTo=XJcHgGhWjDJZ
+- Team, K. (s. f.). Keras documentation: Whole model saving & loading. Recuperado 18 de abril de 2026, de https://keras.io/api/models/model_saving_apis/model_saving_and_loading/
